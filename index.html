@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>ST2</title>
+
+  <!-- Roboto: enforced across entire app -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --padTop: calc(env(safe-area-inset-top) + 6px);
+      --padSide: 18px;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(to bottom, #141b24 0%, #000000 100%);
+      font-family: 'Roboto', system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      color: #e5e7eb;
+    }
+
+    .hidden { display: none; }
+
+    /* Persistent title */
+    .title {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 42px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      color: #7cc7ff;
+      white-space: nowrap;
+      opacity: 0;
+      animation:
+        fadeIn 2.6s ease-out forwards,
+        driftUp 0.5s ease-in-out forwards;
+      animation-delay:
+        0s,
+        2.6s;
+      animation-fill-mode: forwards;
+      pointer-events: none;
+    }
+
+    /* Login */
+    .login {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      margin-top: 12px;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      opacity: 0;
+      animation: uiFade 0.5s ease-in-out forwards;
+      animation-delay: 2.6s;
+    }
+
+    .field, .btn {
+      width: 100%;
+      height: 52px;
+      border-radius: 14px;
+      box-sizing: border-box;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(234,242,255,.92);
+      font-size: 15px;
+      padding: 0 14px;
+      outline: none;
+      box-shadow: 0 16px 45px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      font-family: inherit;
+    }
+
+    .field::placeholder { color: rgba(154,176,201,.75); }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      letter-spacing: .2px;
+      background: linear-gradient(135deg, rgba(124,199,255,.92), rgba(88,214,198,.88));
+      color: #08111a;
+      border: 0;
+      cursor: pointer;
+    }
+
+    /* Main UI */
+    .main {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hamburger {
+      position: absolute;
+      top: calc(var(--padTop) + 18px);
+      right: var(--padSide);
+      width: 28px;
+      height: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hamburger span {
+      height: 3px;
+      width: 100%;
+      background: rgba(200,200,200,.6);
+      border-radius: 2px;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 18px;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      color: rgba(200,200,200,.55);
+      line-height: 1.4;
+      letter-spacing: .2px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes driftUp {
+      from { top: 50%; transform: translate(-50%, -50%); }
+      to   { top: var(--padTop); transform: translate(-50%, 0); }
+    }
+
+    @keyframes uiFade {
+      from { opacity: 0; transform: translate(-50%, -40%); }
+      to   { opacity: 1; transform: translate(-50%, -50%); }
+    }
+  
+    .subtitle{
+      position: absolute;
+      left: 50%;
+      top: calc(var(--padTop) + 44px);
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(150,150,150,.78);
+      letter-spacing: .18px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+    }
+    body.signed-in .subtitle{
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    body.signed-in .connect-tab{
+      animation: fadeIn 0.45s ease-out forwards;
+      animation-delay: 0.12s;
+    }
+
+  
+    .connect-tab{
+      position:absolute;
+      left:50%;
+      top:calc(var(--padTop) + 88px);
+      transform:translateX(-50%);
+      padding:10px 18px;
+      border:1.5px solid rgba(180,180,180,.45);
+      border-radius:22px;
+      font-size:14px;
+      color:rgba(200,200,200,.8);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      opacity:0;
+pointer-events:auto;
+    }
+    .connect-tab .plus{
+      font-size:18px;
+      font-weight:500;
+      line-height:1;
+    }
+  
+    /* Connect -> expand to input */
+    .connect-tab{
+      transition: width .22s ease, padding .22s ease, border-color .22s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .connect-tab.expanded{
+      width: 78%;
+      max-width: 420px;
+      justify-content: space-between;
+      padding:10px 14px;
+      border-color: rgba(180,180,180,.65);
+    }
+    .connect-input{
+      flex:1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: rgba(230,230,230,.95);
+      font-size:14px;
+      font-family: inherit;
+      padding: 0 8px 0 2px;
+    }
+    .connect-input::placeholder{
+      color: rgba(170,170,170,.7);
+    }
+    .connect-send{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:#22c55e;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+    .connect-send svg{
+      width:14px;
+      height:14px;
+      fill:#ffffff;
+      display:block;
+    }
+
+  
+    /* Remove tap highlight / focus flash */
+    *{ -webkit-tap-highlight-color: transparent; }
+    .connect-send{ outline: none; }
+    .connect-send:focus, .connect-send:focus-visible{ outline: none; }
+
+    /* Invites list */
+    .invites{
+      position:absolute;
+      left:50%;
+      top:calc(var(--padTop) + 140px);
+      transform:translateX(-50%);
+      width:78%;
+      max-width:420px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:auto;
+    }
+    .invite-card{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border:1.5px solid rgba(180,180,180,.22);
+      background: rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:12px 12px 12px 14px;
+      box-shadow: 0 16px 45px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+    }
+    .invite-text{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+      padding-right:10px;
+    }
+    .invite-to{
+      font-size:14px;
+      color:rgba(235,235,235,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .invite-status{
+      font-size:12px;
+      color:rgba(160,160,160,.78);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .invite-del{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:#ef4444;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+      cursor:pointer;
+      user-select:none;
+    }
+    .invite-del svg{
+      width:14px;
+      height:14px;
+      fill:#ffffff;
+      display:block;
+    }
+
+  
+    /* Invites list scroll: cap at 8 items */
+    .invites{
+      max-height: calc(8 * 66px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .invites::-webkit-scrollbar{ width: 6px; }
+    .invites::-webkit-scrollbar-thumb{ background: rgba(180,180,180,.25); border-radius: 4px; }
+    .invites::-webkit-scrollbar-track{ background: transparent; }
+
+  
+    /* Scroll interaction hints (fade in on scroll, fade out after inactivity) */
+    .scroll-hint{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      background: rgba(40,40,40,.55);
+      border: 1px solid rgba(200,200,200,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+      z-index: 5;
+      backdrop-filter: blur(10px);
+    }
+    .scroll-hint svg{
+      width:16px;
+      height:16px;
+      fill: rgba(255,255,255,.85);
+      display:block;
+    }
+    .scroll-hint.up{ top: calc(var(--padTop) + 144px); }
+    .scroll-hint.down{ bottom: 74px; }
+
+    .scroll-hint.show{ opacity: 1; }
+
+  
+    /* Bigger scroll buttons */
+    .scroll-hint{
+      width:44px;
+      height:44px;
+    }
+    .scroll-hint svg{
+      width:22px;
+      height:22px;
+    }
+    .scroll-hint.show{
+      pointer-events:auto;
+    }
+
+  
+    /* Enlarge scroll buttons when visible */
+    .scroll-hint{
+      transform: translateX(-50%) scale(0.85);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .scroll-hint.show{
+      transform: translateX(-50%) scale(1.15);
+    }
+
+  
+    /* Invite status state word colors */
+    .state-word{ font-weight: 700; }
+    .state-sent{ color: #ff2d2d; }       /* bright red */
+    .state-received{ color: #ffd400; }   /* bright yellow */
+    .state-accepted{ color: #22c55e; }   /* bright green */
+
+  
+  /* ST4: login validation toast */
+  .st-toast{
+    position: absolute;
+    left: 50%;
+    bottom: 120px;
+    transform: translateX(-50%) translateY(6px);
+    background: rgba(0,0,0,.78);
+    border: 1px solid rgba(255,255,255,.14);
+    color: rgba(255,255,255,.92);
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    max-width: 86%;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+  }
+  .st-toast.show{
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+
+  /* ST4 incremental: signup modal + passkey */
+  .st-modal{
+    position:absolute; inset:0;
+    z-index: 60;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    padding: 0 18px 22px;
+  }
+  .st-modal.hidden{ display:none !important; }
+  .st-modal-scrim{
+    position:absolute; inset:0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(8px);
+  }
+  .st-modal-card{
+    position:relative;
+    width:100%;
+    max-width: 440px;
+    background: rgba(0,0,0,.32);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 18px;
+    padding: 16px 16px 14px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    backdrop-filter: blur(14px);
+  }
+  .st-modal-title{
+    font-size: 16px;
+    color: rgba(245,245,245,.92);
+    letter-spacing: .2px;
+    margin-bottom: 6px;
+  }
+  .st-modal-sub{
+    font-size: 12px;
+    color: rgba(175,175,175,.8);
+    margin-bottom: 10px;
+  }
+  .st-avatar-row{
+    display:flex; align-items:center; gap:12px;
+    margin: 4px 0 10px;
+  }
+  .st-avatar{
+    width:48px; height:48px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.22);
+    color: rgba(255,255,255,.92);
+    font-size: 22px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .st-avatar-hint{
+    font-size: 12px;
+    color: rgba(165,165,165,.78);
+  }
+  .st-nick{
+    width:100%;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.22);
+    color: rgba(255,255,255,.92);
+    border-radius: 14px;
+    padding: 12px 12px;
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .st-nick::placeholder{ color: rgba(170,170,170,.6); }
+  .st-modal-actions{ display:flex; gap:10px; }
+  .st-passkey{
+    flex: 1;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: rgba(255,255,255,.92);
+    background: rgba(34,197,94,.95);
+    box-shadow: 0 10px 28px rgba(34,197,94,.18);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .st-passkey:disabled{
+    opacity: .45;
+    cursor: default;
+    box-shadow: none;
+  }
+  .st-modal-foot{
+    margin-top: 10px;
+    font-size: 11px;
+    color: rgba(150,150,150,.72);
+    text-align:center;
+  }
+
+</style>
+
+</head>
+<body>
+
+  <div class="title">Still there?</div>
+  <div class="subtitle">Check on your people.</div>
+
+  <div id="loginScreen">
+    <div class="login">
+      <input class="field" type="text" placeholder="Enter phone number or email" />
+      <div class="btn" id="enterApp">Sign in / Sign up</div>
+    </div>
+  </div>
+
+  <div id="mainScreen" class="main hidden">
+    <div class="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div class="connect-tab" id="connectTab"><span class="plus">+</span><span class="label">Connect</span></div>
+    <div class="invites" id="invitesList"></div>
+    <div class="scroll-hint up" id="scrollUpHint" aria-hidden="true" role="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 14.59 12 10l4.59 4.59L18 13.17 12 7.17l-6 6z"/></svg>
+    </div>
+    <div class="scroll-hint down" id="scrollDownHint" aria-hidden="true" role="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+    </div>
+    <div class="footer">
+      © Betterly Technologies<br/>
+      All Rights Reserved, 2025
+    </div>
+  </div>
+
+  <script>
+
+  // --- ST4 incremental: passkey signup (HTML-only prototype) ---
+  function __stRandBytes(n){
+    const a = new Uint8Array(n);
+    (crypto && crypto.getRandomValues) ? crypto.getRandomValues(a) : a.fill(Math.floor(Math.random()*256));
+    return a;
+  }
+  function __stB64Url(buf){
+    const bytes = new Uint8Array(buf);
+    let s = "";
+    for(let i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]);
+    let b64 = btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+    return b64;
+  }
+  function __stRandomEmoji(){
+    const pool=["😀","😄","😎","🙂","😉","🤝","🧠","🌿","🌙","⭐","🔥","🫶","💚","💛","🩵","🧩","🧿","🪐","🌈","🍀","🐺","🐻","🦊","🐼","🐨","🐯","🦁","🐸","🐙","🦋"];
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+  function __stAccountsLoad(){
+    try{ return JSON.parse(localStorage.getItem("st4_accounts_v1")||"[]") || []; }catch(_){ return []; }
+  }
+  function __stAccountsSave(list){
+    try{ localStorage.setItem("st4_accounts_v1", JSON.stringify(list)); }catch(_){}
+  }
+  async function __stCreatePasskeyFor(contact, nickname){
+    // WebAuthn requires https/localhost. This is a UX prototype until backend challenges exist.
+    if(!window.isSecureContext){
+      throw new Error("Passkeys need https or localhost.");
+    }
+    if(!navigator.credentials || !window.PublicKeyCredential){
+      throw new Error("Passkeys not supported on this browser.");
+    }
+    const challenge = __stRandBytes(32);
+    const userId = __stRandBytes(16);
+    const publicKey = {
+      challenge,
+      rp: { name: "Still There" },
+      user: {
+        id: userId,
+        name: contact.value,
+        displayName: nickname
+      },
+      pubKeyCredParams: [
+        { type: "public-key", alg: -7 } // ES256
+      ],
+      authenticatorSelection: {
+        residentKey: "preferred",
+        userVerification: "preferred"
+      },
+      timeout: 60000,
+      attestation: "none"
+    };
+    const cred = await navigator.credentials.create({ publicKey });
+    if(!cred) throw new Error("Passkey cancelled.");
+    return {
+      credentialId: __stB64Url(cred.rawId),
+      type: cred.type
+    };
+  }
+  // --- /ST4 incremental: passkey signup ---
+
+
+  // ST4 incremental: gate login by validating email/phone (format only)
+  function __stShowToast(msg){
+    const t = document.getElementById("stToast");
+    if(!t){ try{ alert(msg); }catch(_){ } return; }
+    t.textContent = msg;
+    t.classList.add("show");
+    if(t.__timer) clearTimeout(t.__timer);
+    t.__timer = setTimeout(()=> t.classList.remove("show"), 2200);
+  }
+
+  function __stNormalizeLogin(raw){
+    const s = (raw || "").trim();
+    if(!s) return null;
+
+    // email
+    if(s.includes("@")){
+      const lower = s.toLowerCase();
+      if(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(lower)){
+        return { type:"email", value: lower };
+      }
+      return null;
+    }
+
+
+    function __stProceedToMain(){
+      document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("mainScreen").classList.remove("hidden");
+      
+            const elapsedSec = (performance.now() - __t0) / 1000;
+            const titleDoneAtSec = 3.1; // 2.6s fadeIn + 0.5s driftUp
+            const delayMs = Math.max(0, (titleDoneAtSec - elapsedSec)) * 1000;
+      
+            window.setTimeout(() => {
+              document.body.classList.add("signed-in");
+              wireScrollHintListeners();
+              renderInvites();
+
+  // modal scrim (no close yet; we can add cancel later)
+  (function(){
+    const modal = document.getElementById("signupModal");
+    const scrim = modal ? modal.querySelector(".st-modal-scrim") : null;
+    if(scrim && !scrim.__wired){
+      scrim.__wired = true;
+      scrim.addEventListener("click", (e)=>{ e.stopPropagation(); });
+    }
+  })();
+
+            }, delayMs);
+          
+    }
+    // phone: strip everything except digits
+    const justDigits = s.replace(/\D/g,"");
+    if(justDigits.length === 10){
+      return { type:"phone", value: "+1 " + justDigits.slice(0,3) + " " + justDigits.slice(3,6) + " " + justDigits.slice(6) };
+    }
+    if(justDigits.length >= 11 && justDigits.length <= 15){
+      // basic E.164-ish display
+      return { type:"phone", value: "+" + justDigits };
+    }
+    return null;
+  }
+
+
+    const STORAGE_KEY = "st3_invites_v2";
+
+    function formatDateTime(ts){
+      const d = new Date(ts);
+      return d.toLocaleString([], { year:"numeric", month:"2-digit", day:"2-digit", hour:"numeric", minute:"2-digit" });
+    }
+
+    function loadInvites(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch(e){
+        return [];
+      }
+    }
+
+    function saveInvites(invites){
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(invites)); }catch(e){}
+    }
+
+
+    function statusWord(state){
+      if (state === "received") return "received";
+      if (state === "accepted") return "accepted";
+      return "sent";
+    }
+    function statusClass(state){
+      if (state === "received") return "state-received";
+      if (state === "accepted") return "state-accepted";
+      return "state-sent";
+    }
+    function statusTimestamp(inv){
+      if (inv.state === "accepted") return inv.tsAccepted || inv.ts || Date.now();
+      if (inv.state === "received") return inv.tsReceived || inv.ts || Date.now();
+      return inv.tsSent || inv.ts || Date.now();
+    }
+    function formatInviteStatusHtml(inv){
+      const word = statusWord(inv.state);
+      const cls = statusClass(inv.state);
+      const ts = statusTimestamp(inv);
+      return `Invitation <span class="state-word ${cls}">${word}</span> on ${formatDateTime(ts)}`;
+    }
+
+    function setInviteState(id, state){
+      const invites = loadInvites();
+      const idx = invites.findIndex(x => String(x.id) === String(id));
+      if (idx === -1) return false;
+
+      const now = Date.now();
+      const it = invites[idx];
+      if (!it.tsSent) it.tsSent = it.ts || now;
+
+      if (state === "received"){
+        it.state = "received";
+        it.tsReceived = now;
+      } else if (state === "accepted"){
+        it.state = "accepted";
+        it.tsAccepted = now;
+      } else {
+        it.state = "sent";
+        it.tsSent = now;
+      }
+      invites[idx] = it;
+      saveInvites(invites);
+      renderInvites();
+      return true;
+    }
+
+    // Hook points for future integration (read receipts / account linking)
+    window.ST3_markInviteReceived = (id) => setInviteState(id, "received");
+    window.ST3_markInviteAccepted = (id) => setInviteState(id, "accepted");
+
+
+    // Scroll hints
+    const scrollUpHint = document.getElementById("scrollUpHint");
+    const scrollDownHint = document.getElementById("scrollDownHint");
+    let scrollHintTimer = null;
+
+    function showScrollHints(){
+      if (!scrollUpHint || !scrollDownHint) return;
+      scrollUpHint.classList.add("show");
+      scrollDownHint.classList.add("show");
+      if (scrollHintTimer) window.clearTimeout(scrollHintTimer);
+      scrollHintTimer = window.setTimeout(() => {
+        scrollUpHint.classList.remove("show");
+        scrollDownHint.classList.remove("show");
+      }, 1000);
+    }
+
+    function hideScrollHints(){
+      if (!scrollUpHint || !scrollDownHint) return;
+      scrollUpHint.classList.remove("show");
+      scrollDownHint.classList.remove("show");
+    }
+
+
+    const invitesList = document.getElementById("invitesList");
+    let __hintWired = false;
+
+    function wireScrollHintListeners(){
+      if (!invitesList || __hintWired) return;
+      __hintWired = true;
+
+      const ping = () => { showScrollHints(); };
+
+      invitesList.addEventListener("scroll", ping, { passive:true });
+      invitesList.addEventListener("touchstart", ping, { passive:true });
+      invitesList.addEventListener("touchmove", ping, { passive:true });
+      invitesList.addEventListener("wheel", ping, { passive:true });
+      invitesList.addEventListener("pointerdown", ping, { passive:true });
+    }
+
+    function updateHintVisibilityForScrollability(){
+      if (!invitesList) return;
+      const scrollable = invitesList.scrollHeight > (invitesList.clientHeight + 1);
+      if (!scrollable){
+        hideScrollHints();
+      }
+    }
+
+    function scrollInvitesToTop(){
+      if (!invitesList) return;
+      invitesList.scrollTo({ top: 0, behavior: "smooth" });
+      showScrollHints();
+    }
+    function scrollInvitesToBottom(){
+      if (!invitesList) return;
+      invitesList.scrollTo({ top: invitesList.scrollHeight, behavior: "smooth" });
+      showScrollHints();
+    }
+
+    if (scrollUpHint){
+      scrollUpHint.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        scrollInvitesToTop();
+      });
+    }
+    if (scrollDownHint){
+      scrollDownHint.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        scrollInvitesToBottom();
+      });
+    }
+
+    function renderInvites(){
+      wireScrollHintListeners();
+      const list = document.getElementById("invitesList");
+      if (!list) return;
+      const invites = loadInvites();
+
+      list.innerHTML = invites.map((it) => {
+        const safeTo = String(it.to || "").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        const statusHtml = formatInviteStatusHtml(it);
+        return `
+          <div class="invite-card" data-id="${it.id}">
+            <div class="invite-text">
+              <div class="invite-to">${safeTo}</div>
+              <div class="invite-status">${statusHtml}</div>
+            </div>
+            <div class="invite-del" title="Remove">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.3 19.71 2.89 18.29 9.17 12 2.89 5.71 4.3 4.29l6.29 6.3 6.29-6.3z"></path>
+              </svg>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+            updateHintVisibilityForScrollability();
+
+      list.querySelectorAll(".invite-card").forEach(card => {
+        const id = card.getAttribute("data-id");
+        const del = card.querySelector(".invite-del");
+        if (del){
+          del.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            const next = loadInvites().filter(x => String(x.id) !== String(id));
+            saveInvites(next);
+            renderInvites();
+          });
+        }
+      });
+    }
+
+    // --- Signed-in transition ---
+    const __t0 = performance.now();
+    document.getElementById("enterApp").addEventListener("click", () => {
+  const field = document.querySelector("#loginScreen .field");
+  const norm = __stNormalizeLogin(field ? field.value : "");
+  if(!norm){
+    __stShowToast("Enter a valid email or phone. Examples: jane@site.com • +1 505 123 4567 • 5051234567");
+    return;
+  }
+  // auto-format
+  if(field && norm.type==="email"){ field.value = norm.value; }
+  if(field && norm.type==="phone"){ field.value = norm.value; }
+
+  // ST4: treat every login as NEW for now -> open profile modal
+  window.__stPendingContact = norm;
+
+  const modal = document.getElementById("signupModal");
+  const avatarBtn = document.getElementById("stAvatarBtn");
+  const nick = document.getElementById("stNick");
+  const createBtn = document.getElementById("stCreatePasskey");
+
+  if(modal){
+    modal.classList.remove("hidden");
+    modal.setAttribute("aria-hidden","false");
+  }
+
+  if(avatarBtn && !avatarBtn.__wired){
+    avatarBtn.__wired = true;
+    avatarBtn.textContent = __stRandomEmoji();
+    avatarBtn.addEventListener("click", () => {
+      avatarBtn.textContent = __stRandomEmoji();
+    });
+  }
+
+  if(nick && !nick.__wired){
+    nick.__wired = true;
+    nick.addEventListener("input", () => {
+      const ok = (nick.value || "").trim().length >= 2;
+      if(createBtn) createBtn.disabled = !ok;
+    });
+    // initial state
+    if(createBtn) createBtn.disabled = true;
+  }
+
+  if(createBtn && !createBtn.__wired){
+    createBtn.__wired = true;
+    createBtn.addEventListener("click", async () => {
+      const nickname = (nick ? nick.value : "").trim();
+      if(nickname.length < 2){
+        __stShowToast("Nickname must be at least 2 characters.");
+        return;
+      }
+      const avatar = (avatarBtn ? avatarBtn.textContent : "😀");
+
+      try{
+        const pk = await __stCreatePasskeyFor(window.__stPendingContact, nickname);
+
+        // store account (local prototype)
+        const list = __stAccountsLoad();
+        list.unshift({
+          contact_type: window.__stPendingContact.type,
+          contact_value: window.__stPendingContact.value,
+          nickname,
+          avatar,
+          passkey_cred_id: pk.credentialId,
+          created_at: Date.now()
+        });
+        __stAccountsSave(list);
+
+        // mock session
+        try{ localStorage.setItem("st4_session_mock", JSON.stringify(window.__stPendingContact)); }catch(_){}
+
+        // close modal and proceed
+        if(modal){
+          modal.classList.add("hidden");
+          modal.setAttribute("aria-hidden","true");
+        }
+        __stProceedToMain();
+      }catch(err){
+        __stShowToast(String(err && err.message ? err.message : err));
+      }
+    });
+  }
+
+  // focus nickname
+  if(nick) setTimeout(()=>nick.focus(), 50);
+});
+// --- Connect expand/collapse + send ---
+    const connectTab = document.getElementById("connectTab");
+    let expanded = false;
+    let committed = false;
+
+    function renderConnectDefault(){
+      connectTab.classList.remove("expanded");
+      connectTab.innerHTML = `<span class="plus">+</span><span class="label">Connect</span>`;
+      expanded = false;
+      committed = false;
+    }
+
+    function renderConnectExpanded(){
+      connectTab.classList.add("expanded");
+      connectTab.innerHTML = `
+        <input class="connect-input" type="text" placeholder="Enter their phone number or email" />
+        <div class="connect-send" aria-label="Send">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 5l7 7-7 7v-4H3v-6h11V5z"></path>
+          </svg>
+        </div>
+      `;
+      expanded = true;
+
+      const input = connectTab.querySelector(".connect-input");
+      const send = connectTab.querySelector(".connect-send");
+
+      if (send){
+        send.addEventListener("pointerdown", (ev) => {
+          committed = true;
+          ev.preventDefault();
+        });
+        send.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          committed = true;
+
+          const val = (input?.value || "").trim();
+          if (!val){
+            input?.focus();
+            committed = false;
+            return;
+          }
+
+          const ts = Date.now();
+          const invite = {
+            id: String(ts) + "_" + Math.random().toString(16).slice(2),
+            to: val,
+            state: "sent",
+            tsSent: ts,
+            ts
+          };
+
+          const invites = loadInvites();
+
+          invites.unshift(invite);
+          saveInvites(invites);
+
+          // Immediate DOM update
+          renderInvites();
+          renderConnectDefault();
+        });
+      }
+
+      if (input){
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Escape") renderConnectDefault();
+          if (ev.key === "Enter") send?.click();
+        });
+        input.focus();
+      }
+    }
+
+    if (connectTab){
+      connectTab.addEventListener("click", () => {
+        if (!document.body.classList.contains("signed-in")) return;
+        if (expanded) return;
+        renderConnectExpanded();
+      });
+    }
+
+    document.addEventListener("pointerdown", (ev) => {
+      if (!expanded) return;
+      const inside = connectTab.contains(ev.target);
+      if (!inside && !committed){
+        renderConnectDefault();
+      }
+    });
+  
+    // Ensure scroll hint buttons scroll list to top/bottom
+    const __invitesList = document.getElementById("invitesList");
+    if (scrollUpHint){
+      scrollUpHint.addEventListener("pointerdown", (e)=>{ e.preventDefault(); }, { passive:false });
+      scrollUpHint.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if (!__invitesList) return;
+        __invitesList.scrollTop = 0;
+        try{ __invitesList.scrollTo({ top: 0, behavior: "smooth" }); }catch(e){}
+      });
+    }
+    if (scrollDownHint){
+      scrollDownHint.addEventListener("pointerdown", (e)=>{ e.preventDefault(); }, { passive:false });
+      scrollDownHint.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        if (!__invitesList) return;
+        const bottom = Math.max(0, __invitesList.scrollHeight - __invitesList.clientHeight);
+        __invitesList.scrollTop = bottom;
+        try{ __invitesList.scrollTo({ top: bottom, behavior: "smooth" }); }catch(e){}
+      });
+    }
+
+  
+</script>
+
+
+  <div class="st-toast" id="stToast" aria-live="polite"></div>
+</body>
+</html>
