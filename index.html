@@ -404,102 +404,6 @@ pointer-events:auto;
     transform: translateX(-50%) translateY(0);
   }
 
-
-  /* ST4 incremental: signup modal + passkey */
-  .st-modal{
-    position:absolute; inset:0;
-    z-index: 60;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    padding: 0 18px 22px;
-  }
-  .st-modal.hidden{ display:none !important; }
-  .st-modal-scrim{
-    position:absolute; inset:0;
-    background: rgba(0,0,0,.55);
-    backdrop-filter: blur(8px);
-  }
-  .st-modal-card{
-    position:relative;
-    width:100%;
-    max-width: 440px;
-    background: rgba(0,0,0,.32);
-    border: 1px solid rgba(255,255,255,.14);
-    border-radius: 18px;
-    padding: 16px 16px 14px;
-    box-shadow: 0 24px 80px rgba(0,0,0,.55);
-    backdrop-filter: blur(14px);
-  }
-  .st-modal-title{
-    font-size: 16px;
-    color: rgba(245,245,245,.92);
-    letter-spacing: .2px;
-    margin-bottom: 6px;
-  }
-  .st-modal-sub{
-    font-size: 12px;
-    color: rgba(175,175,175,.8);
-    margin-bottom: 10px;
-  }
-  .st-avatar-row{
-    display:flex; align-items:center; gap:12px;
-    margin: 4px 0 10px;
-  }
-  .st-avatar{
-    width:48px; height:48px;
-    border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.22);
-    color: rgba(255,255,255,.92);
-    font-size: 22px;
-    display:flex; align-items:center; justify-content:center;
-    cursor:pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .st-avatar-hint{
-    font-size: 12px;
-    color: rgba(165,165,165,.78);
-  }
-  .st-nick{
-    width:100%;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(0,0,0,.22);
-    color: rgba(255,255,255,.92);
-    border-radius: 14px;
-    padding: 12px 12px;
-    outline: none;
-    font-family: inherit;
-    font-size: 14px;
-    margin-bottom: 10px;
-  }
-  .st-nick::placeholder{ color: rgba(170,170,170,.6); }
-  .st-modal-actions{ display:flex; gap:10px; }
-  .st-passkey{
-    flex: 1;
-    border: none;
-    border-radius: 14px;
-    padding: 12px 12px;
-    font-size: 14px;
-    font-family: inherit;
-    color: rgba(255,255,255,.92);
-    background: rgba(34,197,94,.95);
-    box-shadow: 0 10px 28px rgba(34,197,94,.18);
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .st-passkey:disabled{
-    opacity: .45;
-    cursor: default;
-    box-shadow: none;
-  }
-  .st-modal-foot{
-    margin-top: 10px;
-    font-size: 11px;
-    color: rgba(150,150,150,.72);
-    text-align:center;
-  }
-
 </style>
 
 </head>
@@ -536,33 +440,21 @@ pointer-events:auto;
 
   <script>
 
-  // --- ST4 incremental: passkey signup (HTML-only prototype) ---
+  // --- ST4 incremental: Passkey quick test (HTTPS required) ---
   function __stRandBytes(n){
     const a = new Uint8Array(n);
-    (crypto && crypto.getRandomValues) ? crypto.getRandomValues(a) : a.fill(Math.floor(Math.random()*256));
+    crypto.getRandomValues(a);
     return a;
   }
   function __stB64Url(buf){
     const bytes = new Uint8Array(buf);
     let s = "";
     for(let i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]);
-    let b64 = btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-    return b64;
+    return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
   }
-  function __stRandomEmoji(){
-    const pool=["😀","😄","😎","🙂","😉","🤝","🧠","🌿","🌙","⭐","🔥","🫶","💚","💛","🩵","🧩","🧿","🪐","🌈","🍀","🐺","🐻","🦊","🐼","🐨","🐯","🦁","🐸","🐙","🦋"];
-    return pool[Math.floor(Math.random()*pool.length)];
-  }
-  function __stAccountsLoad(){
-    try{ return JSON.parse(localStorage.getItem("st4_accounts_v1")||"[]") || []; }catch(_){ return []; }
-  }
-  function __stAccountsSave(list){
-    try{ localStorage.setItem("st4_accounts_v1", JSON.stringify(list)); }catch(_){}
-  }
-  async function __stCreatePasskeyFor(contact, nickname){
-    // WebAuthn requires https/localhost. This is a UX prototype until backend challenges exist.
+  async function __stCreatePasskeyQuick(contactValue){
     if(!window.isSecureContext){
-      throw new Error("Passkeys need https or localhost.");
+      throw new Error("Passkeys require HTTPS (GitHub Pages) or localhost.");
     }
     if(!navigator.credentials || !window.PublicKeyCredential){
       throw new Error("Passkeys not supported on this browser.");
@@ -572,14 +464,8 @@ pointer-events:auto;
     const publicKey = {
       challenge,
       rp: { name: "Still There" },
-      user: {
-        id: userId,
-        name: contact.value,
-        displayName: nickname
-      },
-      pubKeyCredParams: [
-        { type: "public-key", alg: -7 } // ES256
-      ],
+      user: { id: userId, name: contactValue, displayName: contactValue },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }], // ES256
       authenticatorSelection: {
         residentKey: "preferred",
         userVerification: "preferred"
@@ -589,12 +475,9 @@ pointer-events:auto;
     };
     const cred = await navigator.credentials.create({ publicKey });
     if(!cred) throw new Error("Passkey cancelled.");
-    return {
-      credentialId: __stB64Url(cred.rawId),
-      type: cred.type
-    };
+    return { credentialId: __stB64Url(cred.rawId) };
   }
-  // --- /ST4 incremental: passkey signup ---
+  // --- /ST4 incremental: Passkey quick test ---
 
 
   // ST4 incremental: gate login by validating email/phone (format only)
@@ -620,33 +503,6 @@ pointer-events:auto;
       return null;
     }
 
-
-    function __stProceedToMain(){
-      document.getElementById("loginScreen").classList.add("hidden");
-            document.getElementById("mainScreen").classList.remove("hidden");
-      
-            const elapsedSec = (performance.now() - __t0) / 1000;
-            const titleDoneAtSec = 3.1; // 2.6s fadeIn + 0.5s driftUp
-            const delayMs = Math.max(0, (titleDoneAtSec - elapsedSec)) * 1000;
-      
-            window.setTimeout(() => {
-              document.body.classList.add("signed-in");
-              wireScrollHintListeners();
-              renderInvites();
-
-  // modal scrim (no close yet; we can add cancel later)
-  (function(){
-    const modal = document.getElementById("signupModal");
-    const scrim = modal ? modal.querySelector(".st-modal-scrim") : null;
-    if(scrim && !scrim.__wired){
-      scrim.__wired = true;
-      scrim.addEventListener("click", (e)=>{ e.stopPropagation(); });
-    }
-  })();
-
-            }, delayMs);
-          
-    }
     // phone: strip everything except digits
     const justDigits = s.replace(/\D/g,"");
     if(justDigits.length === 10){
@@ -847,92 +703,30 @@ pointer-events:auto;
 
     // --- Signed-in transition ---
     const __t0 = performance.now();
-    document.getElementById("enterApp").addEventListener("click", () => {
+    document.getElementById("enterApp").addEventListener("click", async () => {
   const field = document.querySelector("#loginScreen .field");
   const norm = __stNormalizeLogin(field ? field.value : "");
   if(!norm){
     __stShowToast("Enter a valid email or phone. Examples: jane@site.com • +1 505 123 4567 • 5051234567");
     return;
   }
-  // auto-format
   if(field && norm.type==="email"){ field.value = norm.value; }
   if(field && norm.type==="phone"){ field.value = norm.value; }
 
-  // ST4: treat every login as NEW for now -> open profile modal
-  window.__stPendingContact = norm;
-
-  const modal = document.getElementById("signupModal");
-  const avatarBtn = document.getElementById("stAvatarBtn");
-  const nick = document.getElementById("stNick");
-  const createBtn = document.getElementById("stCreatePasskey");
-
-  if(modal){
-    modal.classList.remove("hidden");
-    modal.setAttribute("aria-hidden","false");
+  try{
+    const pk = await __stCreatePasskeyQuick(norm.value);
+    // store prototype passkey id by contact (for later existing-user login work)
+    try{
+      const k = "st4_passkeys_v1";
+      const map = JSON.parse(localStorage.getItem(k) || "{}");
+      map[norm.value] = { credentialId: pk.credentialId, ts: Date.now() };
+      localStorage.setItem(k, JSON.stringify(map));
+    }catch(_){}
+    __stProceedToMain();
+  }catch(err){
+    __stShowToast(String(err && err.message ? err.message : err));
   }
-
-  if(avatarBtn && !avatarBtn.__wired){
-    avatarBtn.__wired = true;
-    avatarBtn.textContent = __stRandomEmoji();
-    avatarBtn.addEventListener("click", () => {
-      avatarBtn.textContent = __stRandomEmoji();
-    });
-  }
-
-  if(nick && !nick.__wired){
-    nick.__wired = true;
-    nick.addEventListener("input", () => {
-      const ok = (nick.value || "").trim().length >= 2;
-      if(createBtn) createBtn.disabled = !ok;
-    });
-    // initial state
-    if(createBtn) createBtn.disabled = true;
-  }
-
-  if(createBtn && !createBtn.__wired){
-    createBtn.__wired = true;
-    createBtn.addEventListener("click", async () => {
-      const nickname = (nick ? nick.value : "").trim();
-      if(nickname.length < 2){
-        __stShowToast("Nickname must be at least 2 characters.");
-        return;
-      }
-      const avatar = (avatarBtn ? avatarBtn.textContent : "😀");
-
-      try{
-        const pk = await __stCreatePasskeyFor(window.__stPendingContact, nickname);
-
-        // store account (local prototype)
-        const list = __stAccountsLoad();
-        list.unshift({
-          contact_type: window.__stPendingContact.type,
-          contact_value: window.__stPendingContact.value,
-          nickname,
-          avatar,
-          passkey_cred_id: pk.credentialId,
-          created_at: Date.now()
-        });
-        __stAccountsSave(list);
-
-        // mock session
-        try{ localStorage.setItem("st4_session_mock", JSON.stringify(window.__stPendingContact)); }catch(_){}
-
-        // close modal and proceed
-        if(modal){
-          modal.classList.add("hidden");
-          modal.setAttribute("aria-hidden","true");
-        }
-        __stProceedToMain();
-      }catch(err){
-        __stShowToast(String(err && err.message ? err.message : err));
-      }
-    });
-  }
-
-  // focus nickname
-  if(nick) setTimeout(()=>nick.focus(), 50);
-});
-// --- Connect expand/collapse + send ---
+});// --- Connect expand/collapse + send ---
     const connectTab = document.getElementById("connectTab");
     let expanded = false;
     let committed = false;
